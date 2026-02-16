@@ -1,6 +1,7 @@
 use crate::display;
 use colored::Colorize;
 use serde::Serialize;
+use std::sync::LazyLock;
 use std::time::Instant;
 
 #[derive(Serialize)]
@@ -21,7 +22,7 @@ struct ServerInfo {
     upload_url: &'static str,
 }
 
-fn get_servers() -> Vec<ServerInfo> {
+static SERVERS: LazyLock<Vec<ServerInfo>> = LazyLock::new(|| {
     vec![
         ServerInfo {
             name: "Cloudflare",
@@ -36,19 +37,16 @@ fn get_servers() -> Vec<ServerInfo> {
             upload_url: "https://www.google.com/generate_204",
         },
     ]
-}
+});
 
 fn select_server(name: Option<&str>) -> &'static ServerInfo {
-    let servers = get_servers();
-    // Leak is fine for static-lifetime CLI data
-    let servers: &'static Vec<ServerInfo> = Box::leak(Box::new(servers));
     if let Some(name) = name {
-        servers
+        SERVERS
             .iter()
             .find(|s| s.name.to_lowercase() == name.to_lowercase())
-            .unwrap_or(&servers[0])
+            .unwrap_or(&SERVERS[0])
     } else {
-        &servers[0]
+        &SERVERS[0]
     }
 }
 

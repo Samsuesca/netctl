@@ -1,0 +1,43 @@
+{
+  "name": "netctl",
+  "version": "1.0.1",
+  "previous_versions": ["0.1.0"],
+  "edition": "2021",
+  "target": "aarch64-apple-darwin",
+  "repository": "https://github.com/Samsuesca/netctl",
+  "author": "Angel Samuel Suesca Rios <suescapsam@gmail.com>",
+  "build": {
+    "lto": true,
+    "strip": true,
+    "opt_level": 3,
+    "codegen_units": 1,
+    "panic": "abort",
+    "binary_size": "2.1 MB"
+  },
+  "platform": {
+    "primary": "macOS (Apple Silicon M3)",
+    "supported": ["macOS", "Linux"]
+  },
+  "features": [
+    "HTTP-based speed testing (multi-CDN)",
+    "Active connections monitoring by app",
+    "Per-app bandwidth tracking",
+    "Ping statistics with jitter analysis",
+    "Domain blocking for focus mode",
+    "VPN detection (WireGuard, PPP, tunnels)",
+    "DNS diagnostics and cache flushing"
+  ],
+  "changelog": {
+    "1.0.1": [
+      "Added full release profile (LTO, strip, codegen-units=1, panic=abort)",
+      "Removed unused trust-dns-resolver dependency",
+      "Minimized tokio features (full -> rt-multi-thread, macros, time)",
+      "Fixed Box::leak memory leak with LazyLock",
+      "Unified get_process_name() and format_rate() into utils module",
+      "Upgraded box drawing to Unicode rounded corners",
+      "Moved block state from /tmp to ~/.netctl/ (persistent)",
+      "Added comprehensive help text with examples",
+      "Added versions.json for version tracking"
+    ]
+  }
+}

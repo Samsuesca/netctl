@@ -5,12 +5,26 @@ mod display;
 mod dns;
 mod ping;
 mod speed;
+pub mod utils;
 mod vpn;
 
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "netctl", version, about = "Network monitoring and management CLI")]
+#[command(
+    name = "netctl",
+    version,
+    about = "Network monitoring and management CLI",
+    after_help = "\
+Common workflows:
+  Speed test:           netctl speed
+  Active connections:   netctl connections --active
+  Bandwidth monitor:    netctl bandwidth --watch
+  DNS diagnostics:      netctl dns lookup google.com
+  Ping with stats:      netctl ping 8.8.8.8 -c 10
+  Check VPN:            netctl vpn status
+  Block distractions:   netctl block add twitter.com --duration 2h"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -19,6 +33,19 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Network speed test (download/upload)
+    #[command(long_about = "\
+Network speed test (download/upload)
+
+Measures download speed, upload speed, and latency against a remote server.
+Supports multiple test servers and can export results to JSON for tracking
+over time.
+
+Examples:
+  netctl speed                         Run a quick speed test (Cloudflare)
+  netctl speed --server google         Use Google as the test server
+  netctl speed --detailed              Include jitter and packet loss metrics
+  netctl speed --output results.json   Save results to a JSON file
+  netctl speed --detailed --output ~/speed-log.json")]
     Speed {
         /// Server to use for the test (cloudflare, google)
         #[arg(long)]
@@ -34,6 +61,19 @@ enum Commands {
     },
 
     /// List active network connections by application
+    #[command(long_about = "\
+List active network connections by application
+
+Shows all active TCP/UDP connections grouped by application, including PIDs,
+remote addresses, protocols, and connection states. Supports filtering and
+continuous monitoring.
+
+Examples:
+  netctl connections                       List all active connections
+  netctl connections --external            Show only external (non-local) connections
+  netctl connections --app chrome          Filter connections by application name
+  netctl connections --watch               Continuously monitor connections
+  netctl connections --watch --interval 5  Monitor with a 5-second refresh")]
     Connections {
         /// Filter by application name
         #[arg(long)]
@@ -53,6 +93,19 @@ enum Commands {
     },
 
     /// Real-time bandwidth usage per application
+    #[command(long_about = "\
+Real-time bandwidth usage per application
+
+Displays per-application network bandwidth consumption (download and upload
+rates). Uses nettop on macOS and ss/proc on Linux. Can alert when bandwidth
+exceeds a threshold.
+
+Examples:
+  netctl bandwidth                     Show current bandwidth by app
+  netctl bandwidth --top 5             Show only the top 5 consumers
+  netctl bandwidth --app spotify       Monitor bandwidth for a specific app
+  netctl bandwidth --watch             Continuously monitor (refreshes every 2s)
+  netctl bandwidth --alert 50MB        Alert if total bandwidth exceeds 50 MB/s")]
     Bandwidth {
         /// Show top N bandwidth consumers
         #[arg(long)]
@@ -72,6 +125,19 @@ enum Commands {
     },
 
     /// Connection quality test (ping with statistics)
+    #[command(long_about = "\
+Connection quality test (ping with statistics)
+
+Sends ICMP ping packets to one or more hosts and reports detailed latency
+statistics including min/avg/max, standard deviation, jitter, and packet
+loss. Falls back to TCP-based pings when ICMP is unavailable.
+
+Examples:
+  netctl ping                              Ping google.com (default)
+  netctl ping 8.8.8.8                      Ping a specific IP address
+  netctl ping cloudflare.com --count 20    Send 20 ping packets
+  netctl ping --hosts 1.1.1.1,8.8.8.8     Ping multiple hosts at once
+  netctl ping github.com --count 50        Extended ping for stability test")]
     Ping {
         /// Host to ping
         host: Option<String>,
@@ -86,6 +152,19 @@ enum Commands {
     },
 
     /// Domain blocker / focus mode
+    #[command(long_about = "\
+Domain blocker / focus mode
+
+Blocks distracting domains by adding entries to /etc/hosts. Supports
+temporary blocks with auto-expiry, enabling/disabling all blocks at once,
+and persists state across reboots. Requires sudo to modify /etc/hosts.
+
+Examples:
+  netctl block --list                              List all blocked domains
+  netctl block --add twitter.com,reddit.com        Block multiple domains
+  netctl block --add youtube.com --duration 2h     Block for 2 hours only
+  netctl block --remove twitter.com                Unblock a domain
+  netctl block --disable                           Disable all blocks temporarily")]
     Block {
         /// Add domains to block (comma-separated)
         #[arg(long)]
@@ -113,12 +192,35 @@ enum Commands {
     },
 
     /// VPN connection status
+    #[command(long_about = "\
+VPN connection status
+
+Detects active VPN tunnels by inspecting network interfaces (tun, utun, tap,
+ppp, wg, ipsec). Shows connection details including protocol, IP addresses,
+DNS servers, and traffic statistics. Supports WireGuard detection.
+
+Examples:
+  netctl vpn status                    Check if a VPN is connected
+  netctl vpn status --detailed         Show traffic stats and full details
+  netctl vpn watch                     Continuously monitor VPN status")]
     Vpn {
         #[command(subcommand)]
         action: VpnAction,
     },
 
     /// DNS diagnostics and benchmarking
+    #[command(long_about = "\
+DNS diagnostics and benchmarking
+
+Tools for inspecting and optimizing DNS resolution. Resolve domains, view
+configured DNS servers, flush the system DNS cache, or benchmark popular
+public resolvers to find the fastest one for your network.
+
+Examples:
+  netctl dns resolve github.com        Resolve a domain to IP addresses
+  netctl dns servers                   Show currently configured DNS servers
+  netctl dns flush                     Flush the system DNS cache
+  netctl dns benchmark                 Benchmark Cloudflare, Google, Quad9, etc.")]
     Dns {
         #[command(subcommand)]
         action: DnsAction,

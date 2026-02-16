@@ -1,14 +1,25 @@
 use colored::Colorize;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 const HOSTS_PATH: &str = "/etc/hosts";
 const BACKUP_PATH: &str = "/etc/hosts.netctl.bak";
 const MARKER_BEGIN: &str = "# >>> netctl block begin";
 const MARKER_END: &str = "# <<< netctl block end";
-const BLOCK_STATE_PATH: &str = "/tmp/netctl_blocks.json";
 
 use serde::{Deserialize, Serialize};
+
+/// Return the path to the block state file (~/.netctl/blocks.json).
+/// Creates the ~/.netctl directory if it does not exist.
+fn block_state_path() -> PathBuf {
+    let base = dirs::home_dir()
+        .unwrap_or_else(|| PathBuf::from("."));
+    let dir = base.join(".netctl");
+    if !dir.exists() {
+        let _ = fs::create_dir_all(&dir);
+    }
+    dir.join("blocks.json")
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct BlockState {
@@ -24,7 +35,8 @@ struct BlockedDomain {
 
 impl BlockState {
     fn load() -> Self {
-        if let Ok(data) = fs::read_to_string(BLOCK_STATE_PATH) {
+        let path = block_state_path();
+        if let Ok(data) = fs::read_to_string(&path) {
             serde_json::from_str(&data).unwrap_or(BlockState {
                 domains: Vec::new(),
                 enabled: false,
@@ -38,8 +50,9 @@ impl BlockState {
     }
 
     fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let path = block_state_path();
         let json = serde_json::to_string_pretty(self)?;
-        fs::write(BLOCK_STATE_PATH, json)?;
+        fs::write(&path, json)?;
         Ok(())
     }
 
@@ -232,7 +245,7 @@ pub fn run(
                 e
             );
             println!("  Run with {} for /etc/hosts modification", "sudo".bold());
-            println!("  Block state saved to {} for later application", BLOCK_STATE_PATH);
+            println!("  Block state saved to {} for later application", block_state_path().display());
         }
     }
 

@@ -2,6 +2,7 @@ use colored::Colorize;
 use std::collections::HashMap;
 use tabled::{Table, settings::Style};
 use serde::Serialize;
+use crate::utils::get_process_name;
 
 #[derive(Debug, Clone, Serialize, tabled::Tabled)]
 struct Connection {
@@ -26,27 +27,6 @@ fn is_local_address(addr: &str) -> bool {
         || addr.starts_with("192.168.")
         || addr.starts_with("10.")
         || addr.starts_with("172.16.")
-}
-
-fn get_process_name(pid: &str) -> String {
-    if pid == "-" || pid.is_empty() {
-        return "Unknown".to_string();
-    }
-    let output = std::process::Command::new("ps")
-        .args(["-p", pid, "-o", "comm="])
-        .output();
-    match output {
-        Ok(out) => {
-            let name = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            if name.is_empty() {
-                "Unknown".to_string()
-            } else {
-                // Extract just the binary name from the path
-                name.rsplit('/').next().unwrap_or(&name).to_string()
-            }
-        }
-        Err(_) => "Unknown".to_string(),
-    }
 }
 
 fn parse_connections() -> Vec<Connection> {

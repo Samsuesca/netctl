@@ -1,6 +1,6 @@
 [package]
 name = "netctl"
-version = "0.1.0"
+version = "1.0.1"
 edition = "2021"
 authors = ["Angel Samuel Suesca Rios <suescapsam@gmail.com>"]
 description = "Network monitoring and management CLI"
@@ -13,7 +13,7 @@ path = "src/main.rs"
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 reqwest = { version = "0.12", features = ["stream"] }
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
 sysinfo = "0.33"
 colored = "2"
 tabled = "0.17"
@@ -21,5 +21,12 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = "0.4"
 futures-util = "0.3"
-trust-dns-resolver = "0.23"
 dns-lookup = "2"
+dirs = "6"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"

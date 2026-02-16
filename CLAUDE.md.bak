@@ -1,0 +1,59 @@
+# netctl - Network diagnostics and monitoring
+
+> macOS command-line utility (Rust)
+
+## Project Overview
+
+**Type:** Command-line utility (Rust)
+**Purpose:** Network diagnostics and monitoring
+**Platform:** macOS (Apple Silicon & Intel)
+
+## Features
+
+- Network interface statistics
+- Bandwidth monitoring
+- Connection tracking
+- DNS resolution testing
+- Latency and ping monitoring
+- Network quality analysis
+
+## Development
+
+```bash
+# Build
+cargo build
+
+# Run
+cargo run -- [ARGS]
+
+# Test
+cargo test
+
+# Format and lint
+cargo fmt
+cargo clippy
+
+# Build release
+cargo build --release
+```
+
+## Installation
+
+```bash
+# Install locally
+cargo install --path .
+
+# Build and copy to system
+cargo build --release
+cp target/release/netctl /usr/local/bin/
+```
+
+## Usage
+
+```bash
+# Show help
+netctl --help
+
+# Show version
+netctl --version
+```

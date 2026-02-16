@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use colored::Colorize;
+pub use crate::utils::format_rate;
 
 /// Print a boxed header section.
 pub fn print_header(title: &str) {
@@ -11,7 +12,7 @@ pub fn print_header(title: &str) {
     println!(
         "{}",
         format!(
-            "\u{250c}{}\u{2510}",
+            "\u{256d}{}\u{256e}",
             "\u{2500}".repeat(width)
         )
         .cyan()
@@ -71,25 +72,13 @@ pub fn print_footer() {
     println!(
         "{}",
         format!(
-            "\u{2514}{}\u{2518}",
+            "\u{2570}{}\u{256f}",
             "\u{2500}".repeat(width)
         )
         .cyan()
     );
 }
 
-/// Format bytes per second into a human-readable rate string.
-pub fn format_rate(bytes_per_sec: f64) -> String {
-    if bytes_per_sec >= 1_000_000_000.0 {
-        format!("{:.1} GB/s", bytes_per_sec / 1_000_000_000.0)
-    } else if bytes_per_sec >= 1_000_000.0 {
-        format!("{:.1} MB/s", bytes_per_sec / 1_000_000.0)
-    } else if bytes_per_sec >= 1_000.0 {
-        format!("{:.0} KB/s", bytes_per_sec / 1_000.0)
-    } else {
-        format!("{:.0} B/s", bytes_per_sec)
-    }
-}
 
 /// Format bytes into a human-readable size string.
 pub fn format_bytes(bytes: u64) -> String {

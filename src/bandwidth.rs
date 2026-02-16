@@ -1,6 +1,7 @@
 use colored::Colorize;
 use std::collections::HashMap;
 use tabled::{Table, settings::Style};
+use crate::utils::{format_rate, get_process_name};
 
 #[derive(Debug, Clone, tabled::Tabled)]
 struct AppBandwidth {
@@ -33,35 +34,6 @@ fn parse_alert_bytes(alert: &str) -> Option<u64> {
     }
 }
 
-fn format_rate(bytes: u64) -> String {
-    if bytes >= 1_000_000 {
-        format!("{:.1} MB/s", bytes as f64 / 1_000_000.0)
-    } else if bytes >= 1_000 {
-        format!("{:.0} KB/s", bytes as f64 / 1_000.0)
-    } else {
-        format!("{} B/s", bytes)
-    }
-}
-
-fn get_process_name(pid: &str) -> String {
-    if pid.is_empty() || pid == "-" {
-        return "Unknown".to_string();
-    }
-    let output = std::process::Command::new("ps")
-        .args(["-p", pid, "-o", "comm="])
-        .output();
-    match output {
-        Ok(out) => {
-            let name = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            if name.is_empty() {
-                "Unknown".to_string()
-            } else {
-                name.rsplit('/').next().unwrap_or(&name).to_string()
-            }
-        }
-        Err(_) => "Unknown".to_string(),
-    }
-}
 
 /// Read per-process bandwidth from /proc/net or platform-specific tools.
 fn read_bandwidth() -> HashMap<String, RawBandwidth> {
@@ -221,9 +193,9 @@ pub async fn run(
             .iter()
             .map(|(name, bw)| AppBandwidth {
                 application: name.clone(),
-                download: format_rate(bw.bytes_in),
-                upload: format_rate(bw.bytes_out),
-                total: format_rate(bw.bytes_in + bw.bytes_out),
+                download: format_rate(bw.bytes_in as f64),
+                upload: format_rate(bw.bytes_out as f64),
+                total: format_rate((bw.bytes_in + bw.bytes_out) as f64),
             })
             .collect();
 
@@ -232,9 +204,9 @@ pub async fn run(
             let rest_out: u64 = rest.iter().map(|(_, b)| b.bytes_out).sum();
             display_rows.push(AppBandwidth {
                 application: format!("Other ({} apps)", rest.len()),
-                download: format_rate(rest_in),
-                upload: format_rate(rest_out),
-                total: format_rate(rest_in + rest_out),
+                download: format_rate(rest_in as f64),
+                upload: format_rate(rest_out as f64),
+                total: format_rate((rest_in + rest_out) as f64),
             });
         }
 
@@ -254,9 +226,9 @@ pub async fn run(
             println!(
                 "Total:  {} {}   {} {}",
                 "↓".cyan(),
-                format_rate(total_down),
+                format_rate(total_down as f64),
                 "↑".green(),
-                format_rate(total_up)
+                format_rate(total_up as f64)
             );
         }
 
@@ -273,7 +245,7 @@ pub async fn run(
                     "{}",
                     format!(
                         "  ALERT: Bandwidth usage ({}) exceeds threshold!",
-                        format_rate(total)
+                        format_rate(total as f64)
                     )
                     .red()
                     .bold()
